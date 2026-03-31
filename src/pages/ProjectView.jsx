@@ -269,74 +269,6 @@ export default function ProjectView() {
               )}
             </div>
 
-            {/* Overall Comment Section */}
-            <div className="mt-4 bg-white rounded-xl border border-slate-100 p-5">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-slate-600" />
-                  <h3 className="font-semibold text-slate-800">전체 수정 코멘트</h3>
-                </div>
-                {!isEditingComment && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={startEditComment}
-                    className="text-slate-500 hover:text-slate-800 rounded-lg"
-                  >
-                    <Pencil className="w-4 h-4 mr-1.5" />
-                    {project.overall_comment ? '수정' : '작성'}
-                  </Button>
-                )}
-              </div>
-
-              {isEditingComment ? (
-                <div className="space-y-3">
-                  <Textarea
-                    value={commentDraft}
-                    onChange={(e) => setCommentDraft(e.target.value)}
-                    placeholder="영상 전체에 대한 수정 방향, 종합 의견을 작성하세요..."
-                    className="min-h-[120px] resize-none border-slate-200 focus-visible:ring-1 focus-visible:ring-blue-200 rounded-lg"
-                    autoFocus
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-                        e.preventDefault();
-                        saveComment();
-                      }
-                      if (e.key === 'Escape') cancelEditComment();
-                    }}
-                  />
-                  <div className="flex items-center gap-2">
-                    <Button
-                      size="sm"
-                      onClick={saveComment}
-                      disabled={updateOverallCommentMutation.isPending}
-                      className="bg-slate-900 hover:bg-slate-800 rounded-lg"
-                    >
-                      <Check className="w-4 h-4 mr-1.5" />
-                      저장
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={cancelEditComment}
-                      className="rounded-lg"
-                    >
-                      <X className="w-4 h-4 mr-1.5" />
-                      취소
-                    </Button>
-                    <span className="text-xs text-slate-400 ml-auto">Ctrl+Enter로 저장</span>
-                  </div>
-                </div>
-              ) : project.overall_comment ? (
-                <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">
-                  {project.overall_comment}
-                </p>
-              ) : (
-                <p className="text-sm text-slate-400 italic">
-                  아직 전체 코멘트가 작성되지 않았습니다
-                </p>
-              )}
-            </div>
           </div>
         </div>
 
@@ -356,6 +288,75 @@ export default function ProjectView() {
                 </Badge>
               )}
             </div>
+          </div>
+
+          {/* Overall Comment Section */}
+          <div className="p-3 border-b border-slate-200 bg-white">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-1.5">
+                <FileText className="w-4 h-4 text-slate-600" />
+                <h4 className="text-sm font-semibold text-slate-800">전체 수정 코멘트</h4>
+              </div>
+              {!isEditingComment && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={startEditComment}
+                  className="h-7 px-2 text-xs text-slate-500 hover:text-slate-800 rounded-md"
+                >
+                  <Pencil className="w-3 h-3 mr-1" />
+                  {project.overall_comment ? '수정' : '작성'}
+                </Button>
+              )}
+            </div>
+
+            {isEditingComment ? (
+              <div className="space-y-2">
+                <Textarea
+                  value={commentDraft}
+                  onChange={(e) => setCommentDraft(e.target.value)}
+                  placeholder="영상 전체에 대한 수정 방향, 종합 의견을 작성하세요..."
+                  className="min-h-[80px] resize-none text-sm border-slate-200 focus-visible:ring-1 focus-visible:ring-blue-200 rounded-lg"
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                      e.preventDefault();
+                      saveComment();
+                    }
+                    if (e.key === 'Escape') cancelEditComment();
+                  }}
+                />
+                <div className="flex items-center gap-1.5">
+                  <Button
+                    size="sm"
+                    onClick={saveComment}
+                    disabled={updateOverallCommentMutation.isPending}
+                    className="h-7 px-2.5 text-xs bg-slate-900 hover:bg-slate-800 rounded-md"
+                  >
+                    <Check className="w-3 h-3 mr-1" />
+                    저장
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={cancelEditComment}
+                    className="h-7 px-2.5 text-xs rounded-md"
+                  >
+                    <X className="w-3 h-3 mr-1" />
+                    취소
+                  </Button>
+                  <span className="text-[10px] text-slate-400 ml-auto">Ctrl+Enter로 저장</span>
+                </div>
+              </div>
+            ) : project.overall_comment ? (
+              <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">
+                {project.overall_comment}
+              </p>
+            ) : (
+              <p className="text-xs text-slate-400 italic">
+                아직 전체 코멘트가 작성되지 않았습니다
+              </p>
+            )}
           </div>
 
           {/* Feedback List */}
