@@ -10,13 +10,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import FeedbackItem from './FeedbackItem.jsx';
 
-export default function FeedbackList({ 
-  feedbacks, 
-  onFeedbackClick, 
+export default function FeedbackList({
+  feedbacks,
+  onFeedbackClick,
   activeFeedbackId,
   isLoading,
   onToggleResolve,
   onDelete,
+  onEdit,
   onTimestampClick
 }) {
   const [searchQuery, setSearchQuery] = useState('');
@@ -109,6 +110,7 @@ export default function FeedbackList({
               isActive={activeFeedbackId === feedback.id}
               onToggleResolve={onToggleResolve}
               onDelete={onDelete}
+              onEdit={onEdit}
               onTimestampClick={onTimestampClick}
             />
           ))

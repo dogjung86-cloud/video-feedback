@@ -4,15 +4,15 @@ import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Settings, Share2, MessageSquare, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Settings, Share2, MessageSquare, FileText, Pencil, Check, X } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import VideoPlayer from '../components/video/VideoPlayer.jsx';
@@ -28,13 +28,17 @@ const statusConfig = {
 export default function ProjectView() {
   const urlParams = new URLSearchParams(window.location.search);
   const projectId = urlParams.get('id');
-  
+
   const videoRef = useRef(null);
   const queryClient = useQueryClient();
-  
+
   const [currentTime, setCurrentTime] = useState(0);
   const [activeFeedbackId, setActiveFeedbackId] = useState(null);
   const { user } = useAuth();
+
+  // Overall comment editing state
+  const [isEditingComment, setIsEditingComment] = useState(false);
+  const [commentDraft, setCommentDraft] = useState('');
 
   const handleCaptureRequest = async () => {
     if (videoRef.current && videoRef.current.captureFrame) {
@@ -66,11 +70,27 @@ export default function ProjectView() {
     }
   });
 
+  const updateFeedbackMutation = useMutation({
+    mutationFn: ({ id, content }) => base44.entities.Feedback.update(id, { content }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['feedbacks', projectId] });
+      toast.success('피드백이 수정되었습니다');
+    }
+  });
+
   const updateStatusMutation = useMutation({
     mutationFn: (status) => base44.entities.Project.update(projectId, { status }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['project', projectId] });
       toast.success('상태가 변경되었습니다');
+    }
+  });
+
+  const updateOverallCommentMutation = useMutation({
+    mutationFn: (overall_comment) => base44.entities.Project.update(projectId, { overall_comment }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['project', projectId] });
+      toast.success('전체 코멘트가 저장되었습니다');
     }
   });
 
@@ -101,6 +121,10 @@ export default function ProjectView() {
     });
   };
 
+  const handleFeedbackEdit = (feedback, newContent) => {
+    updateFeedbackMutation.mutate({ id: feedback.id, content: newContent });
+  };
+
   const handleFeedbackClick = (feedback) => {
     setActiveFeedbackId(feedback.id);
   };
@@ -124,6 +148,21 @@ export default function ProjectView() {
   const handleShareLink = () => {
     navigator.clipboard.writeText(window.location.href);
     toast.success('링크가 복사되었습니다');
+  };
+
+  const startEditComment = () => {
+    setCommentDraft(project?.overall_comment || '');
+    setIsEditingComment(true);
+  };
+
+  const saveComment = () => {
+    updateOverallCommentMutation.mutate(commentDraft.trim());
+    setIsEditingComment(false);
+  };
+
+  const cancelEditComment = () => {
+    setIsEditingComment(false);
+    setCommentDraft('');
   };
 
   if (projectLoading) {
@@ -164,7 +203,7 @@ export default function ProjectView() {
                 <ArrowLeft className="w-5 h-5" />
               </Button>
             </Link>
-            
+
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="font-semibold text-slate-800 text-lg">{project.title}</h1>
@@ -175,7 +214,7 @@ export default function ProjectView() {
               )}
             </div>
           </div>
-          
+
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
@@ -186,7 +225,7 @@ export default function ProjectView() {
               <Share2 className="w-4 h-4 mr-2" />
               공유
             </Button>
-            
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="icon" className="rounded-lg">
@@ -221,7 +260,7 @@ export default function ProjectView() {
               onTimeUpdate={setCurrentTime}
               markers={feedbacks.filter(f => f.timestamp !== null && f.timestamp !== undefined)}
             />
-            
+
             {/* Video Info */}
             <div className="mt-6 bg-white rounded-xl border border-slate-100 p-5">
               <h2 className="text-xl font-semibold text-slate-800 mb-2">{project.title}</h2>
@@ -229,9 +268,78 @@ export default function ProjectView() {
                 <p className="text-slate-600">{project.description}</p>
               )}
             </div>
+
+            {/* Overall Comment Section */}
+            <div className="mt-4 bg-white rounded-xl border border-slate-100 p-5">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-slate-600" />
+                  <h3 className="font-semibold text-slate-800">전체 수정 코멘트</h3>
+                </div>
+                {!isEditingComment && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={startEditComment}
+                    className="text-slate-500 hover:text-slate-800 rounded-lg"
+                  >
+                    <Pencil className="w-4 h-4 mr-1.5" />
+                    {project.overall_comment ? '수정' : '작성'}
+                  </Button>
+                )}
+              </div>
+
+              {isEditingComment ? (
+                <div className="space-y-3">
+                  <Textarea
+                    value={commentDraft}
+                    onChange={(e) => setCommentDraft(e.target.value)}
+                    placeholder="영상 전체에 대한 수정 방향, 종합 의견을 작성하세요..."
+                    className="min-h-[120px] resize-none border-slate-200 focus-visible:ring-1 focus-visible:ring-blue-200 rounded-lg"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                        e.preventDefault();
+                        saveComment();
+                      }
+                      if (e.key === 'Escape') cancelEditComment();
+                    }}
+                  />
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      onClick={saveComment}
+                      disabled={updateOverallCommentMutation.isPending}
+                      className="bg-slate-900 hover:bg-slate-800 rounded-lg"
+                    >
+                      <Check className="w-4 h-4 mr-1.5" />
+                      저장
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={cancelEditComment}
+                      className="rounded-lg"
+                    >
+                      <X className="w-4 h-4 mr-1.5" />
+                      취소
+                    </Button>
+                    <span className="text-xs text-slate-400 ml-auto">Ctrl+Enter로 저장</span>
+                  </div>
+                </div>
+              ) : project.overall_comment ? (
+                <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">
+                  {project.overall_comment}
+                </p>
+              ) : (
+                <p className="text-sm text-slate-400 italic">
+                  아직 전체 코멘트가 작성되지 않았습니다
+                </p>
+              )}
+            </div>
           </div>
         </div>
-        
+
         {/* Feedback Sidebar */}
         <div className="w-[400px] border-l border-slate-200 bg-slate-50 flex flex-col">
           {/* Sidebar Header */}
@@ -249,7 +357,7 @@ export default function ProjectView() {
               )}
             </div>
           </div>
-          
+
           {/* Feedback List */}
           <div className="flex-1 overflow-hidden">
             <FeedbackList
@@ -259,10 +367,11 @@ export default function ProjectView() {
               isLoading={feedbacksLoading}
               onToggleResolve={handleToggleResolve}
               onDelete={handleDeleteFeedback}
+              onEdit={handleFeedbackEdit}
               onTimestampClick={handleTimestampClick}
             />
           </div>
-          
+
           {/* Feedback Input */}
           <div className="p-4 border-t border-slate-200 bg-white">
             <FeedbackInput
