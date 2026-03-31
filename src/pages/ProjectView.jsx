@@ -4,7 +4,7 @@ import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Settings, Share2, MessageSquare, FileText, Pencil, Check, X } from 'lucide-react';
+import { ArrowLeft, Settings, Share2, MessageSquare, FileText, Pencil, Check, X, Trash2 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -291,22 +291,38 @@ export default function ProjectView() {
           </div>
 
           {/* Overall Comment Section */}
-          <div className="p-3 border-b border-slate-200 bg-white">
+          <div className="p-3 border-b border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-1.5">
-                <FileText className="w-4 h-4 text-slate-600" />
-                <h4 className="text-sm font-semibold text-slate-800">전체 수정 코멘트</h4>
+                <FileText className="w-4 h-4 text-amber-600" />
+                <h4 className="text-sm font-semibold text-amber-900">전체 수정 코멘트</h4>
               </div>
               {!isEditingComment && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={startEditComment}
-                  className="h-7 px-2 text-xs text-slate-500 hover:text-slate-800 rounded-md"
-                >
-                  <Pencil className="w-3 h-3 mr-1" />
-                  {project.overall_comment ? '수정' : '작성'}
-                </Button>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={startEditComment}
+                    className="h-7 px-2 text-xs text-amber-700 hover:text-amber-900 hover:bg-amber-100 rounded-md"
+                  >
+                    <Pencil className="w-3 h-3 mr-1" />
+                    {project.overall_comment ? '수정' : '작성'}
+                  </Button>
+                  {project.overall_comment && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        if (confirm('전체 수정 코멘트를 삭제하시겠습니까?')) {
+                          updateOverallCommentMutation.mutate('');
+                        }
+                      }}
+                      className="h-7 px-2 text-xs text-red-400 hover:text-red-600 hover:bg-red-50 rounded-md"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </Button>
+                  )}
+                </div>
               )}
             </div>
 
@@ -316,7 +332,7 @@ export default function ProjectView() {
                   value={commentDraft}
                   onChange={(e) => setCommentDraft(e.target.value)}
                   placeholder="영상 전체에 대한 수정 방향, 종합 의견을 작성하세요..."
-                  className="min-h-[80px] resize-none text-sm border-slate-200 focus-visible:ring-1 focus-visible:ring-blue-200 rounded-lg"
+                  className="min-h-[80px] resize-none text-sm bg-white border-amber-200 focus-visible:ring-1 focus-visible:ring-amber-300 rounded-lg"
                   autoFocus
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
@@ -331,7 +347,7 @@ export default function ProjectView() {
                     size="sm"
                     onClick={saveComment}
                     disabled={updateOverallCommentMutation.isPending}
-                    className="h-7 px-2.5 text-xs bg-slate-900 hover:bg-slate-800 rounded-md"
+                    className="h-7 px-2.5 text-xs bg-amber-600 hover:bg-amber-700 text-white rounded-md"
                   >
                     <Check className="w-3 h-3 mr-1" />
                     저장
@@ -340,20 +356,20 @@ export default function ProjectView() {
                     size="sm"
                     variant="outline"
                     onClick={cancelEditComment}
-                    className="h-7 px-2.5 text-xs rounded-md"
+                    className="h-7 px-2.5 text-xs border-amber-200 hover:bg-amber-100 rounded-md"
                   >
                     <X className="w-3 h-3 mr-1" />
                     취소
                   </Button>
-                  <span className="text-[10px] text-slate-400 ml-auto">Ctrl+Enter로 저장</span>
+                  <span className="text-[10px] text-amber-500 ml-auto">Ctrl+Enter로 저장</span>
                 </div>
               </div>
             ) : project.overall_comment ? (
-              <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">
+              <p className="text-sm text-amber-900 leading-relaxed whitespace-pre-wrap">
                 {project.overall_comment}
               </p>
             ) : (
-              <p className="text-xs text-slate-400 italic">
+              <p className="text-xs text-amber-400 italic">
                 아직 전체 코멘트가 작성되지 않았습니다
               </p>
             )}
