@@ -161,29 +161,60 @@ const VideoPlayer = forwardRef(({ videoUrl, videoType, onTimeUpdate, markers = [
 
   useEffect(() => {
     if (videoType === 'youtube') {
-      const tag = document.createElement('script');
-      tag.src = 'https://www.youtube.com/iframe_api';
-      const firstScriptTag = document.getElementsByTagName('script')[0];
-      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+      const videoId = getYouTubeId(videoUrl);
 
-      window.onYouTubeIframeAPIReady = () => {
-        const videoId = getYouTubeId(videoUrl);
+      const createPlayer = () => {
+        // 이전 플레이어가 있으면 제거
+        if (youtubePlayerRef.current && youtubePlayerRef.current.destroy) {
+          youtubePlayerRef.current.destroy();
+          youtubePlayerRef.current = null;
+        }
+
+        const playerEl = document.getElementById('youtube-player');
+        if (!playerEl) return;
+
         youtubePlayerRef.current = new window.YT.Player('youtube-player', {
           videoId: videoId,
           events: {
             onReady: (event) => {
               setDuration(event.target.getDuration());
-              const interval = setInterval(() => {
-                if (youtubePlayerRef.current && youtubePlayerRef.current.getCurrentTime) {
-                  const time = youtubePlayerRef.current.getCurrentTime();
-                  setCurrentTime(time);
-                  onTimeUpdate?.(time);
-                }
-              }, 100);
-              return () => clearInterval(interval);
             }
           }
         });
+      };
+
+      // YouTube IFrame API가 이미 로드된 경우 (SPA 내비게이션)
+      if (window.YT && window.YT.Player) {
+        createPlayer();
+      } else {
+        // API가 아직 로드되지 않은 경우 스크립트 추가
+        if (!document.querySelector('script[src="https://www.youtube.com/iframe_api"]')) {
+          const tag = document.createElement('script');
+          tag.src = 'https://www.youtube.com/iframe_api';
+          const firstScriptTag = document.getElementsByTagName('script')[0];
+          firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+        }
+
+        window.onYouTubeIframeAPIReady = () => {
+          createPlayer();
+        };
+      }
+
+      // 시간 업데이트 인터벌
+      const interval = setInterval(() => {
+        if (youtubePlayerRef.current && youtubePlayerRef.current.getCurrentTime) {
+          const time = youtubePlayerRef.current.getCurrentTime();
+          setCurrentTime(time);
+          onTimeUpdate?.(time);
+        }
+      }, 100);
+
+      return () => {
+        clearInterval(interval);
+        if (youtubePlayerRef.current && youtubePlayerRef.current.destroy) {
+          youtubePlayerRef.current.destroy();
+          youtubePlayerRef.current = null;
+        }
       };
     }
   }, [videoType, videoUrl]);
