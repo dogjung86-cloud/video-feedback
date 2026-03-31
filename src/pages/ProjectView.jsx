@@ -1,7 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
+import { useAuth } from '@/lib/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Settings, Share2, MessageSquare, CheckCircle2 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -33,7 +34,7 @@ export default function ProjectView() {
   
   const [currentTime, setCurrentTime] = useState(0);
   const [activeFeedbackId, setActiveFeedbackId] = useState(null);
-  const [user, setUser] = useState(null);
+  const { user } = useAuth();
 
   const handleCaptureRequest = async () => {
     if (videoRef.current && videoRef.current.captureFrame) {
@@ -41,14 +42,6 @@ export default function ProjectView() {
     }
     return null;
   };
-
-  useEffect(() => {
-    const loadUser = async () => {
-      const currentUser = await base44.auth.me();
-      setUser(currentUser);
-    };
-    loadUser();
-  }, []);
 
   const { data: project, isLoading: projectLoading } = useQuery({
     queryKey: ['project', projectId],
@@ -103,7 +96,8 @@ export default function ProjectView() {
       timestamp: data.timestamp,
       author_name: user?.full_name || '익명',
       author_email: user?.email || null,
-      file_urls: data.file_urls || []
+      file_urls: data.file_urls || [],
+      user_id: user?.id || null
     });
   };
 

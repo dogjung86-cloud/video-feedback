@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
+import { useAuth } from '@/lib/AuthContext';
 import {
   Dialog,
   DialogContent,
@@ -19,6 +20,7 @@ import { ko } from 'date-fns/locale';
 import { cn } from "@/lib/utils";
 
 export default function CreateProjectModal({ open, onOpenChange, onCreated }) {
+  const { user } = useAuth();
   const [videoType, setVideoType] = useState('youtube');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -55,7 +57,8 @@ export default function CreateProjectModal({ open, onOpenChange, onCreated }) {
       video_url: videoUrl,
       video_type: videoType,
       status: 'in_progress',
-      deadline: deadline ? format(deadline, 'yyyy-MM-dd') : null
+      deadline: deadline ? format(deadline, 'yyyy-MM-dd') : null,
+      user_id: user?.id || null
     });
     
     setIsSubmitting(false);
