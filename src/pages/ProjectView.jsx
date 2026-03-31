@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
@@ -26,8 +26,8 @@ const statusConfig = {
 };
 
 export default function ProjectView() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const projectId = urlParams.get('id');
+  const [searchParams] = useSearchParams();
+  const projectId = searchParams.get('id');
 
   const videoRef = useRef(null);
   const queryClient = useQueryClient();
